@@ -1,0 +1,1 @@
+copy /v /y "kernel.img" "D:"
