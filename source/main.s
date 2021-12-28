@@ -25,6 +25,7 @@ waitForFree:
     mov r15, r14
 
 setPinR2toR3:
+    //0x3f00b880 = GPU Mailbox 1 (write) Stack Address
     ldr r0, =0x3f00b880
     ldr r1, =PropertyTag
     mov r4, #0
@@ -45,47 +46,97 @@ readMailbox:
         bne readloop$
 
         ldr r1, [r0]
-        and r2, r1, #0b1111 //Extract last 4 bits via AND to check channel
+        and r2, r1, #0b1111 //Extract last 4 bits via AND to check channel (0 & 1 = 0, 1 & 1 = 1 so abcd AND 1111 just returns abcd )
         teq r2, #8
         bne readloop$
     
     mov r0, r1
     mov r15, r14
 
-delay:
+countToR1:
     mov r0, #0
     countloop$:
         add r0, #1
-        cmp r0, #0x300000
+        cmp r0, r1
         bne countloop$
     mov r15, r14
+
 .section .init
 _start:
-    //0x3f00b880 = GPU Mailbox 1 (write) Stack Address
-    mov r2, #29
+
+    //Disable Red LED
+    mov r2, #130
     mov r3, #1
     bl waitForFree
     bl setPinR2toR3
     bl readMailbox
 
-    mov r2, #130
-    bl waitForFree
-    bl setPinR2toR3
-    bl readMailbox
+    mov r12, #0 //Use R12 as Counter As Never Usually Used
+    greenBlinkLoop$:
+        mov r1, #0xf0000
+        bl countToR1
+        mov r2, #29
+        mov r3, #1
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
 
-    bl delay
+        mov r1, #0xf0000
+        bl countToR1
+        mov r2, #29
+        mov r3, #0
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
 
-    mov r2, #29
-    mov r3, #0
-    bl waitForFree
-    bl setPinR2toR3
-    bl readMailbox
+        add r12, #1
+        cmp r12, #3
+        bne greenBlinkLoop$
 
-    mov r2, #130
-    bl waitForFree
-    bl setPinR2toR3
-    bl readMailbox
+    mov r12, #0
+    redBlinkLoop$:
+        mov r1, #0x1e0000
+        bl countToR1
+        mov r2, #130
+        mov r3, #0
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
 
-    bl delay
+        mov r1, #0x1e0000
+        bl countToR1
+        mov r2, #130
+        mov r3, #1
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
 
+        add r12, #1
+        cmp r12, #3
+        bne redBlinkLoop$
+
+    mov r12, #0 
+    greenBlinkLoop2$:
+        mov r1, #0xf0000
+        bl countToR1
+        mov r2, #29
+        mov r3, #1
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
+
+        mov r1, #0xf0000
+        bl countToR1
+        mov r2, #29
+        mov r3, #0
+        bl waitForFree
+        bl setPinR2toR3
+        bl readMailbox
+
+        add r12, #1
+        cmp r12, #3
+        bne greenBlinkLoop2$
+
+    mov r1, #0xf0000
+    bl countToR1
     b _start
