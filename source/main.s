@@ -61,82 +61,57 @@ countToR1:
         bne countloop$
     mov r15, r14
 
-.section .init
-_start:
+blinkGreen:
+    push {r14} //push link register to top of stack
+    
+    mov r1, #0xf0000
+    bl countToR1
+    
+    mov r2, #29
+    mov r3, #1
+    bl waitForFree
+    bl setPinR2toR3
+    bl readMailbox
 
-    //Disable Red LED
+    mov r1, #0xf0000
+    bl countToR1
+
+    mov r2, #29
+    mov r3, #0
+    bl waitForFree
+    bl setPinR2toR3
+    bl readMailbox
+
+    pop {r15} //pop program counter from top of stack
+
+blinkRed:
+    push {r14}
+
+    mov r1, #0xf0000
+    bl countToR1
+    mov r2, #130
+    mov r3, #0
+    bl waitForFree
+    bl setPinR2toR3
+    bl readMailbox
+
+    mov r1, #0xf0000
+    bl countToR1
+
     mov r2, #130
     mov r3, #1
     bl waitForFree
     bl setPinR2toR3
     bl readMailbox
 
-    mov r12, #0 //Use R12 as Counter As Never Usually Used
-    greenBlinkLoop$:
-        mov r1, #0xf0000
-        bl countToR1
-        mov r2, #29
-        mov r3, #1
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
+    pop {r15}
 
-        mov r1, #0xf0000
-        bl countToR1
-        mov r2, #29
-        mov r3, #0
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
+mainloop:
+    bl blinkGreen
+    bl blinkRed
+    b mainloop
 
-        add r12, #1
-        cmp r12, #3
-        bne greenBlinkLoop$
-
-    mov r12, #0
-    redBlinkLoop$:
-        mov r1, #0x1e0000
-        bl countToR1
-        mov r2, #130
-        mov r3, #0
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
-
-        mov r1, #0x1e0000
-        bl countToR1
-        mov r2, #130
-        mov r3, #1
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
-
-        add r12, #1
-        cmp r12, #3
-        bne redBlinkLoop$
-
-    mov r12, #0 
-    greenBlinkLoop2$:
-        mov r1, #0xf0000
-        bl countToR1
-        mov r2, #29
-        mov r3, #1
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
-
-        mov r1, #0xf0000
-        bl countToR1
-        mov r2, #29
-        mov r3, #0
-        bl waitForFree
-        bl setPinR2toR3
-        bl readMailbox
-
-        add r12, #1
-        cmp r12, #3
-        bne greenBlinkLoop2$
-
-    mov r1, #0xf0000
-    bl countToR1
-    b _start
+.section .init
+_start:
+    mov r13, #0x8000    //set stack pointer to 0x8000 as that is where init is located in memory
+    b mainloop
